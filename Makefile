@@ -1,0 +1,3 @@
+.PHONE:
+run:
+	cargo run
