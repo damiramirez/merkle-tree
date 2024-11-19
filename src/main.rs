@@ -1,9 +1,7 @@
-use sha3::{Digest, Sha3_256};
+use tree::create_merkle_tree;
+
+mod tree;
 
 fn main() {
-    let enconde = hex::encode(Sha3_256::digest(b"abc"));
-    assert_eq!(
-        enconde,
-        "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532"
-    )
+    create_merkle_tree(vec!["1", "2", "3", "4", "5", "6", "7", "8"]);
 }
