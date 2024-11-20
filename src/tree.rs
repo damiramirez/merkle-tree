@@ -1,6 +1,8 @@
 use sha3::{Digest, Sha3_256};
 
-type MerkleTree = Vec<Vec<[u8; 32]>>;
+pub type Hash = [u8; 32];
+
+type MerkleTree = Vec<Vec<Hash>>;
 
 pub fn create_merkle_tree(leaves: Vec<&[u8]>) -> MerkleTree {
     let mut tree: MerkleTree = Vec::new();
@@ -18,7 +20,7 @@ pub fn create_merkle_tree(leaves: Vec<&[u8]>) -> MerkleTree {
 }
 
 fn create_first_leaves(tree: &mut MerkleTree, leaves: Vec<&[u8]>) {
-    let mut first_leaves: Vec<[u8; 32]> = Vec::new();
+    let mut first_leaves: Vec<Hash> = Vec::new();
 
     for leaf in &leaves {
         let hash_value = hash_one(leaf);
@@ -29,10 +31,10 @@ fn create_first_leaves(tree: &mut MerkleTree, leaves: Vec<&[u8]>) {
 }
 
 fn create_next_leaves(tree: &mut MerkleTree, level: usize) {
-    let mut next_leaves: Vec<[u8; 32]> = Vec::new();
+    let mut next_leaves: Vec<Hash> = Vec::new();
 
     for i in 0..tree[level - 1].len().div_ceil(2) {
-        let l_hash: &[u8; 32] = &tree[level - 1][i * 2];
+        let l_hash: &Hash = &tree[level - 1][i * 2];
         let r_hash = match &tree[level - 1].get(i * 2 + 1) {
             Some(hash) => hash,
             None => l_hash,
@@ -44,14 +46,14 @@ fn create_next_leaves(tree: &mut MerkleTree, level: usize) {
     tree.push(next_leaves);
 }
 
-fn hash_one(value: &[u8]) -> [u8; 32] {
+fn hash_one(value: &[u8]) -> Hash {
     let mut hasher = Sha3_256::new();
     hasher.update(value);
     let hashed_value = hasher.finalize_reset();
     hashed_value.into()
 }
 
-fn hash_multiple(values: &[&[u8]]) -> [u8; 32] {
+fn hash_multiple(values: &[&[u8]]) -> Hash {
     let mut hasher = Sha3_256::new();
     for value in values {
         hasher.update(value);
@@ -87,8 +89,37 @@ pub fn print_tree(tree: &MerkleTree) {
     }
 }
 
+pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
+    let mut proof = Vec::new();
+    let first_leaves = tree.first()?;
+    let hash_value = hash_one(value);
+    let mut index = get_leaf(first_leaves, &hash_value)?;
+
+    // Avoid root
+    let level = tree.len() - 1;
+    for layer in tree[0..level].iter() {
+        if index % 2 == 0 {
+            let sibling = match layer.get(index + 1) {
+                Some(r_hash) => r_hash,
+                None => &hash_value,
+            };
+            proof.push(*sibling);
+        } else {
+            proof.push(*layer.get(index - 1).unwrap());
+        }
+
+        index /= 2;
+    }
+
+    Some(proof)
+}
+
+fn get_leaf(layer: &[Hash], value: &Hash) -> Option<usize> {
+    layer.iter().position(|elem| elem == value)
+}
+
 #[cfg(test)]
-fn get_root(tree: &MerkleTree) -> Option<[u8; 32]> {
+fn get_root(tree: &MerkleTree) -> Option<Hash> {
     tree.last().and_then(|level| level.first().cloned())
 }
 
