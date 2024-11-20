@@ -30,21 +30,15 @@ fn create_first_leaves(tree: &mut MerkleTree, leaves: Vec<&[u8]>) {
 
 fn create_next_leaves(tree: &mut MerkleTree, level: usize) {
     let mut next_leaves: Vec<[u8; 32]> = Vec::new();
-    let mut hasher = Sha3_256::new();
 
     for i in 0..tree[level - 1].len().div_ceil(2) {
         let l_hash: &[u8; 32] = &tree[level - 1][i * 2];
-        hasher.update(l_hash);
+        let r_hash = match &tree[level - 1].get(i * 2 + 1) {
+            Some(hash) => hash,
+            None => l_hash,
+        };
 
-        let r_hash = &tree[level - 1].get(i * 2 + 1);
-        // Check if right node exists, if not use the left node
-        match r_hash {
-            Some(hash) => hasher.update(hash),
-            None => hasher.update(l_hash),
-        }
-
-        let hash_values = hasher.finalize_reset();
-        next_leaves.push(hash_values.into());
+        next_leaves.push(hash_multiple(&[l_hash, r_hash]));
     }
 
     tree.push(next_leaves);
@@ -54,6 +48,15 @@ fn hash_one(value: &[u8]) -> [u8; 32] {
     let mut hasher = Sha3_256::new();
     hasher.update(value);
     let hashed_value = hasher.finalize_reset();
+    hashed_value.into()
+}
+
+fn hash_multiple(values: &[&[u8]]) -> [u8; 32] {
+    let mut hasher = Sha3_256::new();
+    for value in values {
+        hasher.update(value);
+    }
+    let hashed_value = hasher.finalize();
     hashed_value.into()
 }
 
