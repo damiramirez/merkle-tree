@@ -1,14 +1,18 @@
-use tree::create_merkle_tree;
+use tree::{add_element, create_merkle_tree, create_proof, print_tree, verify_proof};
 
 mod tree;
 
 fn main() {
-    let tree = create_merkle_tree(vec![b"1", b"2", b"3", b"4"]);
+    let empty: &[String] = &[];
+    let mut tree = create_merkle_tree(empty);
+    tree = add_element(&mut tree, b"1");
+    tree = add_element(&mut tree, b"2");
+    tree = add_element(&mut tree, b"3");
+    tree = add_element(&mut tree, b"4");
+    print_tree(&tree);
 
-    for (i, level) in tree.iter().enumerate() {
-        println!("Layer: {}", i);
-        for hash in level {
-            println!("{}", hex::encode(hash));
-        }
-    }
+    let (proof, index) = create_proof(&tree, b"2").unwrap();
+    let verify = verify_proof(&tree, &proof, index, b"2");
+
+    println!("{}", verify);
 }
