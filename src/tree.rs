@@ -89,19 +89,20 @@ pub fn print_tree(tree: &MerkleTree) {
     }
 }
 
-pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
+pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<(Vec<Hash>, usize)> {
     let mut proof = Vec::new();
-    let first_leaves = tree.first()?;
-    let hash_value = hash_one(value);
-    let mut index = get_leaf(first_leaves, &hash_value)?;
+    let leaves = tree.first()?;
+    let mut index = get_leaf(leaves, &hash_one(value))?;
 
     // Avoid root
     let level = tree.len() - 1;
+
     for layer in tree[0..level].iter() {
         if index % 2 == 0 {
+            // Check if right node is missing
             let sibling = match layer.get(index + 1) {
                 Some(r_hash) => r_hash,
-                None => &hash_value,
+                None => &leaves[index],
             };
             proof.push(*sibling);
         } else {
@@ -111,14 +112,32 @@ pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
         index /= 2;
     }
 
-    Some(proof)
+    Some((proof, index))
+}
+
+pub fn verify_proof(tree: &MerkleTree, proof: Vec<Hash>, value: &[u8]) -> bool {
+    let root = get_root(tree).unwrap();
+    let mut hash_value = hash_one(value);
+    let leaves = tree.first().unwrap();
+    let mut index = get_leaf(leaves, &hash_one(value)).unwrap();
+
+    for pp in proof.iter() {
+        if index % 2 == 0 {
+            hash_value = hash_multiple(&[&hash_value, pp])
+        } else {
+            hash_value = hash_multiple(&[pp, &hash_value])
+        }
+
+        index /= 2;
+    }
+
+    root == hash_value
 }
 
 fn get_leaf(layer: &[Hash], value: &Hash) -> Option<usize> {
     layer.iter().position(|elem| elem == value)
 }
 
-#[cfg(test)]
 fn get_root(tree: &MerkleTree) -> Option<Hash> {
     tree.last().and_then(|level| level.first().cloned())
 }
