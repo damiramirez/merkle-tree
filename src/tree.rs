@@ -115,7 +115,7 @@ pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
     Some(proof)
 }
 
-pub fn verify_proof(tree: &MerkleTree, proof: &Vec<Hash>, value: &[u8]) -> bool {
+pub fn verify_proof(tree: &MerkleTree, proof: &[Hash], value: &[u8]) -> bool {
     let root = get_root(tree).unwrap();
     let mut hash_value = hash_one(value);
     let leaves = tree.first().unwrap();

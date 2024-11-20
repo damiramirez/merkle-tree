@@ -10,5 +10,5 @@ fn main() {
     let proof = create_proof(&tree, b"4").unwrap();
     let verify = verify_proof(&tree, &proof, b"4");
 
-    println!("{}", verify);
+    println!("Create a proof for 4. Verify = {}", verify);
 }
