@@ -4,7 +4,7 @@ pub type Hash = [u8; 32];
 
 type MerkleTree = Vec<Vec<Hash>>;
 
-pub fn create_merkle_tree(leaves: Vec<&[u8]>) -> MerkleTree {
+pub fn create_merkle_tree<T: std::convert::AsRef<[u8]>>(leaves: &[T]) -> MerkleTree {
     let mut tree: MerkleTree = Vec::new();
 
     create_first_leaves(&mut tree, leaves);
@@ -19,10 +19,10 @@ pub fn create_merkle_tree(leaves: Vec<&[u8]>) -> MerkleTree {
     tree
 }
 
-fn create_first_leaves(tree: &mut MerkleTree, leaves: Vec<&[u8]>) {
+fn create_first_leaves<T: std::convert::AsRef<[u8]>>(tree: &mut MerkleTree, leaves: &[T]) {
     let mut first_leaves: Vec<Hash> = Vec::new();
 
-    for leaf in &leaves {
+    for leaf in leaves {
         let hash_value = hash_one(leaf);
         first_leaves.push(hash_value);
     }
@@ -46,9 +46,9 @@ fn create_next_leaves(tree: &mut MerkleTree, level: usize) {
     tree.push(next_leaves);
 }
 
-fn hash_one(value: &[u8]) -> Hash {
+fn hash_one<T: std::convert::AsRef<[u8]>>(value: T) -> Hash {
     let mut hasher = Sha3_256::new();
-    hasher.update(value);
+    hasher.update(value.as_ref());
     let hashed_value = hasher.finalize_reset();
     hashed_value.into()
 }
@@ -62,7 +62,7 @@ fn hash_multiple(values: &[&[u8]]) -> Hash {
     hashed_value.into()
 }
 
-pub fn add_element(tree: &mut MerkleTree, value: &[u8]) -> MerkleTree {
+pub fn add_element<T: std::convert::AsRef<[u8]>>(tree: &mut MerkleTree, value: &T) -> MerkleTree {
     // Re-create the merkle tree with the new value
     let mut new_tree: MerkleTree = Vec::new();
 
@@ -148,13 +148,14 @@ mod tests {
 
     #[test]
     fn empty_tree() {
-        let tree = create_merkle_tree(Vec::new());
+        let empty: &[String] = &[];
+        let tree = create_merkle_tree(empty);
         assert_eq!(get_root(&tree), None);
     }
 
     #[test]
     fn tree_power_of_2_with_4_leaves() {
-        let tree = create_merkle_tree(vec![b"1", b"2", b"3", b"4"]);
+        let tree = create_merkle_tree(&["1", "2", "3", "4"]);
         assert_eq!(
             get_root(&tree),
             Some([
@@ -166,7 +167,7 @@ mod tests {
 
     #[test]
     fn tree_not_power_of_2_with_6_leaves() {
-        let tree = create_merkle_tree(vec![b"1", b"2", b"3", b"4", b"5", b"6"]);
+        let tree = create_merkle_tree(&[b"1", b"2", b"3", b"4", b"5", b"6"]);
         assert_eq!(
             get_root(&tree),
             Some([
@@ -178,7 +179,7 @@ mod tests {
 
     #[test]
     fn tree_add_element() {
-        let mut tree = create_merkle_tree(vec![b"1", b"2", b"3"]);
+        let mut tree = create_merkle_tree(&[b"1", b"2", b"3"]);
         tree = add_element(&mut tree, b"4");
         assert_eq!(
             get_root(&tree),
@@ -191,7 +192,7 @@ mod tests {
 
     #[test]
     fn tree_verify_proof() {
-        let mut tree = create_merkle_tree(vec![b"1", b"2", b"3"]);
+        let mut tree = create_merkle_tree(&[b"1", b"2", b"3"]);
         tree = add_element(&mut tree, b"4");
         let proof = create_proof(&tree, b"4").unwrap();
         assert!(verify_proof(&tree, &proof, b"4"));

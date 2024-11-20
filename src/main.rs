@@ -3,7 +3,8 @@ use tree::{add_element, create_merkle_tree, create_proof, print_tree, verify_pro
 mod tree;
 
 fn main() {
-    let mut tree = create_merkle_tree(vec![]);
+    let empty: &[String] = &[];
+    let mut tree = create_merkle_tree(empty);
     tree = add_element(&mut tree, b"1");
     tree = add_element(&mut tree, b"2");
     tree = add_element(&mut tree, b"3");
