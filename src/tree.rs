@@ -89,10 +89,11 @@ pub fn print_tree(tree: &MerkleTree) {
     }
 }
 
-pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
+pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<(Vec<Hash>, usize)> {
     let mut proof = Vec::new();
     let leaves = tree.first()?;
-    let mut index = get_leaf(leaves, &hash_one(value))?;
+    let mut index = get_leaf_index(leaves, &hash_one(value))?;
+    let idx = index;
 
     // Avoid root
     let level = tree.len() - 1;
@@ -106,20 +107,24 @@ pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
             };
             proof.push(*sibling);
         } else {
-            proof.push(*layer.get(index - 1).unwrap());
+            match layer.get(index - 1) {
+                Some(value) => proof.push(*value),
+                None => return None,
+            }
         }
 
         index /= 2;
     }
 
-    Some(proof)
+    Some((proof, idx))
 }
 
-pub fn verify_proof(tree: &MerkleTree, proof: &[Hash], value: &[u8]) -> bool {
-    let root = get_root(tree).unwrap();
+pub fn verify_proof(tree: &MerkleTree, proof: &[Hash], mut index: usize, value: &[u8]) -> bool {
+    let Some(root) = get_root(tree) else {
+        return false;
+    };
+
     let mut hash_value = hash_one(value);
-    let leaves = tree.first().unwrap();
-    let mut index = get_leaf(leaves, &hash_one(value)).unwrap();
 
     for pp in proof.iter() {
         if index % 2 == 0 {
@@ -134,7 +139,7 @@ pub fn verify_proof(tree: &MerkleTree, proof: &[Hash], value: &[u8]) -> bool {
     root == hash_value
 }
 
-fn get_leaf(layer: &[Hash], value: &Hash) -> Option<usize> {
+fn get_leaf_index(layer: &[Hash], value: &Hash) -> Option<usize> {
     layer.iter().position(|elem| elem == value)
 }
 
@@ -194,8 +199,8 @@ mod tests {
     fn tree_verify_proof() {
         let mut tree = create_merkle_tree(&[b"1", b"2", b"3"]);
         tree = add_element(&mut tree, b"4");
-        let proof = create_proof(&tree, b"4").unwrap();
-        assert!(verify_proof(&tree, &proof, b"4"));
-        assert!(!verify_proof(&tree, &proof, b"2"));
+        let (proof, index) = create_proof(&tree, b"4").unwrap();
+        assert!(verify_proof(&tree, &proof, index, b"4"));
+        assert!(!verify_proof(&tree, &proof, index, b"2"));
     }
 }

@@ -24,7 +24,8 @@ use tree::{add_element, create_merkle_tree, create_proof, print_tree, verify_pro
 mod tree;
 
 fn main() {
-    let mut tree = create_merkle_tree(vec![b"1", b"2", b"3"]);
+    let empty: &[String] = &[];
+    let mut tree = create_merkle_tree(empty);
     tree = add_element(&mut tree, b"4");
     print_tree(&tree);
 
