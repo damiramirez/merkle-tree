@@ -138,7 +138,7 @@ fn get_leaf(layer: &[Hash], value: &Hash) -> Option<usize> {
     layer.iter().position(|elem| elem == value)
 }
 
-fn get_root(tree: &MerkleTree) -> Option<Hash> {
+pub fn get_root(tree: &MerkleTree) -> Option<Hash> {
     tree.last().and_then(|level| level.first().cloned())
 }
 
