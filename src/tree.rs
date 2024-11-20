@@ -57,6 +57,24 @@ fn hash_one(value: &[u8]) -> [u8; 32] {
     hashed_value.into()
 }
 
+pub fn add_element(tree: &mut MerkleTree, value: &[u8]) -> MerkleTree {
+    // Re-create the merkle tree with the new value
+    let mut new_tree: MerkleTree = Vec::new();
+
+    let mut first_leaves = tree.first().cloned().unwrap_or_default();
+    first_leaves.push(hash_one(value));
+
+    new_tree.push(first_leaves);
+    let needs_level = (new_tree[0].len() as f32).log2().ceil() + 1.;
+
+    while new_tree.len() < needs_level as usize {
+        let actual_level = new_tree.len();
+        create_next_leaves(&mut new_tree, actual_level);
+    }
+
+    new_tree
+}
+
 #[cfg(test)]
 fn get_root(tree: &MerkleTree) -> Option<[u8; 32]> {
     tree.last().and_then(|level| level.first().cloned())
@@ -92,6 +110,19 @@ mod tests {
             Some([
                 150, 175, 62, 140, 117, 101, 10, 4, 24, 24, 124, 179, 100, 93, 142, 72, 141, 188,
                 224, 58, 237, 118, 71, 58, 207, 196, 14, 41, 47, 173, 190, 67,
+            ]),
+        );
+    }
+
+    #[test]
+    fn tree_add_element() {
+        let mut tree = create_merkle_tree(vec![b"1", b"2", b"3"]);
+        tree = add_element(&mut tree, b"4");
+        assert_eq!(
+            get_root(&tree),
+            Some([
+                137, 153, 44, 123, 164, 130, 79, 195, 21, 135, 186, 74, 94, 220, 125, 98, 73, 20,
+                100, 119, 87, 220, 77, 185, 218, 60, 243, 252, 72, 120, 28, 89
             ]),
         );
     }
