@@ -1,9 +1,14 @@
-use sha3::{Digest, Sha3_256};
+use tree::create_merkle_tree;
+
+mod tree;
 
 fn main() {
-    let enconde = hex::encode(Sha3_256::digest(b"abc"));
-    assert_eq!(
-        enconde,
-        "3a985da74fe225b2045c172d6bd390bd855f086e3e9d525b46bfe24511431532"
-    )
+    let tree = create_merkle_tree(vec![b"1", b"2", b"3", b"4"]);
+
+    for (i, level) in tree.iter().enumerate() {
+        println!("Layer: {}", i);
+        for hash in level {
+            println!("{}", hex::encode(hash));
+        }
+    }
 }
