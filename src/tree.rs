@@ -115,7 +115,7 @@ pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
     Some(proof)
 }
 
-pub fn verify_proof(tree: &MerkleTree, proof: Vec<Hash>, value: &[u8]) -> bool {
+pub fn verify_proof(tree: &MerkleTree, proof: &Vec<Hash>, value: &[u8]) -> bool {
     let root = get_root(tree).unwrap();
     let mut hash_value = hash_one(value);
     let leaves = tree.first().unwrap();
@@ -187,5 +187,14 @@ mod tests {
                 100, 119, 87, 220, 77, 185, 218, 60, 243, 252, 72, 120, 28, 89
             ]),
         );
+    }
+
+    #[test]
+    fn tree_verify_proof() {
+        let mut tree = create_merkle_tree(vec![b"1", b"2", b"3"]);
+        tree = add_element(&mut tree, b"4");
+        let proof = create_proof(&tree, b"4").unwrap();
+        assert!(verify_proof(&tree, &proof, b"4"));
+        assert!(!verify_proof(&tree, &proof, b"2"));
     }
 }

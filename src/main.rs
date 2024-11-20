@@ -8,7 +8,7 @@ fn main() {
     print_tree(&tree);
 
     let proof = create_proof(&tree, b"4").unwrap();
-    let verify = verify_proof(&tree, proof, b"4");
+    let verify = verify_proof(&tree, &proof, b"4");
 
     println!("{}", verify);
 }
