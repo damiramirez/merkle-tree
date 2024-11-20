@@ -78,6 +78,15 @@ pub fn add_element(tree: &mut MerkleTree, value: &[u8]) -> MerkleTree {
     new_tree
 }
 
+pub fn print_tree(tree: &MerkleTree) {
+    for (i, level) in tree.iter().enumerate() {
+        println!("Layer: {}", i);
+        for hash in level {
+            println!("\t{}", hex::encode(hash));
+        }
+    }
+}
+
 #[cfg(test)]
 fn get_root(tree: &MerkleTree) -> Option<[u8; 32]> {
     tree.last().and_then(|level| level.first().cloned())
