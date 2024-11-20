@@ -89,7 +89,7 @@ pub fn print_tree(tree: &MerkleTree) {
     }
 }
 
-pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<(Vec<Hash>, usize)> {
+pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<Vec<Hash>> {
     let mut proof = Vec::new();
     let leaves = tree.first()?;
     let mut index = get_leaf(leaves, &hash_one(value))?;
@@ -112,7 +112,7 @@ pub fn create_proof(tree: &MerkleTree, value: &[u8]) -> Option<(Vec<Hash>, usize
         index /= 2;
     }
 
-    Some((proof, index))
+    Some(proof)
 }
 
 pub fn verify_proof(tree: &MerkleTree, proof: Vec<Hash>, value: &[u8]) -> bool {
